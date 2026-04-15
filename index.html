@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorting Master Pro: Laboratorio de Algoritmos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+
+        .array-item {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .highlight-pair {
+            border: 4px solid #f59e0b;
+            transform: translateY(-15px);
+            box-shadow: 0 15px 25px -5px rgba(245, 158, 11, 0.4);
+        }
+
+        .highlight-min {
+            border: 4px solid #10b981;
+            background-color: #064e3b !important;
+        }
+
+        .highlight-pivot {
+            border: 4px solid #ec4899;
+            background-color: #500724 !important;
+            box-shadow: 0 0 25px rgba(236, 72, 153, 0.6);
+            transform: translateY(-10px);
+        }
+
+        .highlight-i {
+            border: 3px solid #3b82f6;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+        }
+
+        .sorted-item {
+            background-color: #10b981 !important;
+            border-color: #059669 !important;
+            opacity: 0.9;
+        }
+
+        .smaller-group {
+            background-color: #1e3a8a !important; 
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .pointer-label {
+            position: absolute;
+            bottom: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0) translateX(-50%); }
+            50% { transform: translateY(-5px) translateX(-50%); }
+        }
+        .animate-bounce-slow { animation: bounce 1.5s infinite; }
+        
+        .info-pill {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            color: #60a5fa;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4 md:p-8">
+
+    <header class="text-center mb-8">
+        <h1 class="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-emerald-400">
+            Sorting Master Pro
+        </h1>
+        <p class="text-slate-400 mt-2 text-lg font-light italic">Laboratorio Interactivo de Algoritmos</p>
+    </header>
+
+    <main class="w-full max-w-5xl space-y-8">
+        
+        <!-- Simulador Principal -->
+        <div class="glass-card rounded-3xl p-6 md:p-8 shadow-2xl relative min-h-[500px] flex flex-col justify-center">
+            
+            <!-- Pantalla de Configuración -->
+            <div id="setup-screen" class="text-center py-6">
+                <h2 class="text-2xl font-bold mb-8 text-white">Selecciona tu Desafío</h2>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <button onclick="selectAlgo('bubble')" id="btn-algo-bubble" class="algo-btn p-4 rounded-2xl border-2 border-slate-700 bg-slate-800 hover:border-blue-500 transition-all text-left group">
+                        <div class="text-2xl mb-1 group-hover:scale-125 transition-transform">🫧</div>
+                        <div class="font-bold">Burbuja</div>
+                        <div class="text-[10px] opacity-60 uppercase font-black mt-1">Nivel: Muy Fácil</div>
+                    </button>
+                    <button onclick="selectAlgo('selection')" id="btn-algo-selection" class="algo-btn p-4 rounded-2xl border-2 border-slate-700 bg-slate-800 hover:border-emerald-500 transition-all text-left group">
+                        <div class="text-2xl mb-1 group-hover:scale-125 transition-transform">🎯</div>
+                        <div class="font-bold">Selección</div>
+                        <div class="text-[10px] opacity-60 uppercase font-black mt-1">Nivel: Fácil</div>
+                    </button>
+                    <button onclick="selectAlgo('insertion')" id="btn-algo-insertion" class="algo-btn p-4 rounded-2xl border-2 border-slate-700 bg-slate-800 hover:border-amber-500 transition-all text-left group">
+                        <div class="text-2xl mb-1 group-hover:scale-125 transition-transform">🃏</div>
+                        <div class="font-bold">Inserción</div>
+                        <div class="text-[10px] opacity-60 uppercase font-black mt-1">Nivel: Medio</div>
+                    </button>
+                    <button onclick="selectAlgo('quick')" id="btn-algo-quick" class="algo-btn p-4 rounded-2xl border-2 border-slate-700 bg-slate-800 hover:border-pink-500 transition-all text-left group">
+                        <div class="text-2xl mb-1 group-hover:scale-125 transition-transform">⚡</div>
+                        <div class="font-bold">QuickSort</div>
+                        <div class="text-[10px] opacity-60 uppercase font-black mt-1 text-pink-400">Nivel: Experto</div>
+                    </button>
+                </div>
+
+                <div class="flex flex-col items-center gap-6">
+                    <div>
+                        <p class="text-slate-400 text-sm mb-3">¿Cuántos elementos quieres ordenar?</p>
+                        <div class="flex gap-4">
+                            <button onclick="setDifficulty(4)" id="diff-4" class="diff-btn px-8 py-2 rounded-full border border-slate-600 bg-slate-700 transition-all">4</button>
+                            <button onclick="setDifficulty(6)" id="diff-6" class="diff-btn px-8 py-2 rounded-full border border-blue-500 bg-blue-600 font-bold transition-all">6</button>
+                            <button onclick="setDifficulty(8)" id="diff-8" class="diff-btn px-8 py-2 rounded-full border border-slate-600 bg-slate-700 transition-all">8</button>
+                        </div>
+                    </div>
+                    <button onclick="startGame()" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black py-4 px-16 rounded-2xl transition-all transform hover:scale-105 shadow-xl">
+                        COMENZAR LABORATORIO
+                    </button>
+                </div>
+            </div>
+
+            <!-- Pantalla de Juego Activo -->
+            <div id="game-screen" class="hidden">
+                <div class="flex flex-wrap justify-between items-center mb-10 gap-4 text-xs font-bold uppercase tracking-widest text-slate-400">
+                    <div id="algo-name-display" class="text-blue-400 text-xl flex items-center gap-2"></div>
+                    <div class="flex gap-6 bg-slate-800/50 p-3 rounded-xl border border-white/5">
+                        <div id="move-counter">Aciertos: 0</div>
+                        <div id="error-counter" class="text-rose-400">Errores: 0</div>
+                    </div>
+                </div>
+
+                <div id="array-container" class="flex justify-center items-end gap-3 md:gap-5 h-72 mb-16 px-4"></div>
+
+                <div class="flex flex-col items-center">
+                    <div class="bg-slate-900/80 p-6 rounded-2xl border border-slate-700 w-full mb-6 min-h-[100px] flex items-center justify-center">
+                        <div id="instruction-text" class="text-lg md:text-xl font-medium text-center leading-relaxed">Analizando datos...</div>
+                    </div>
+                    <div id="game-buttons" class="flex gap-4"></div>
+                </div>
+            </div>
+
+            <!-- Pantalla de Victoria -->
+            <div id="victory-screen" class="hidden text-center py-10">
+                <div class="text-6xl mb-4">🏆</div>
+                <h2 class="text-4xl font-black mb-2 text-emerald-400">¡Reto Superado!</h2>
+                <p class="text-slate-400 text-xl mb-8" id="final-stats"></p>
+                <button onclick="resetToSetup()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-10 rounded-xl transition-all shadow-lg">
+                    Probar otro algoritmo
+                </button>
+            </div>
+        </div>
+
+        <!-- SECCIÓN DE EXPLICACIÓN (Centro de Conocimiento) -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="glass-card rounded-2xl p-6 md:col-span-2">
+                <div class="flex items-center gap-3 mb-4">
+                    <span id="guide-icon" class="text-3xl">💡</span>
+                    <h3 id="guide-title" class="text-xl font-bold text-white">Guía de Estudio</h3>
+                </div>
+                <div id="guide-content" class="space-y-4">
+                    <p id="guide-text" class="text-slate-300 leading-relaxed">Selecciona un algoritmo arriba para ver su explicación detallada aquí.</p>
+                    <div id="algo-steps-box" class="hidden bg-slate-800/50 p-4 rounded-xl border border-white/5">
+                        <h4 class="text-blue-400 font-bold text-xs mb-2 uppercase">Pasos clave:</h4>
+                        <ul id="steps-list" class="text-sm space-y-2 text-slate-400 list-disc list-inside"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card rounded-2xl p-6">
+                <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                    Conceptos Útiles
+                </h3>
+                <div class="space-y-4 text-xs">
+                    <div>
+                        <span class="info-pill">Iteración</span>
+                        <p class="mt-1 text-slate-400">Un recorrido completo por los elementos de la lista.</p>
+                    </div>
+                    <div>
+                        <span class="info-pill">Pivote</span>
+                        <p class="mt-1 text-slate-400">Referencia usada para dividir una lista en mayores y menores.</p>
+                    </div>
+                    <div>
+                        <span class="info-pill">Swap</span>
+                        <p class="mt-1 text-slate-400">El proceso físico de intercambiar dos valores en memoria.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="text-center text-slate-500 text-sm pb-8">
+            Diseñado para educación secundaria • Desarrollado por Gemini
+        </footer>
+    </main>
+
+    <script>
+        let array = [];
+        let arraySize = 6;
+        let selectedAlgo = 'bubble';
+        let gameActive = false;
+        
+        let i = 0, j = 0;
+        let minIndex = 0;
+        let pivotIndex = -1;
+        let moves = 0, errors = 0;
+
+        const guides = {
+            bubble: { 
+                title: "Ordenamiento de Burbuja", 
+                icon: "🫧", 
+                text: "Es el más sencillo. Compara parejas vecinas y sube el más grande al final de la lista.",
+                steps: ["Compara vecinos.", "Si el izquierdo es mayor, intercambia.", "El más grande queda fijo al final."]
+            },
+            selection: { 
+                title: "Ordenamiento por Selección", 
+                icon: "🎯", 
+                text: "Busca siempre el número más pequeño de la parte desordenada y lo coloca al principio.",
+                steps: ["Busca el valor mínimo.", "Intercámbialo con el primer lugar disponible.", "Avanza y repite."]
+            },
+            insertion: { 
+                title: "Ordenamiento por Inserción", 
+                icon: "🃏", 
+                text: "Como ordenar cartas: tomas un número y lo mueves hacia atrás hasta que encuentre su lugar correcto.",
+                steps: ["Toma un elemento.", "Muévelo a la izquierda mientras sea menor que sus vecinos."]
+            },
+            quick: { 
+                title: "Algoritmo QuickSort", 
+                icon: "⚡", 
+                text: "Usa un Pivote para separar la lista en dos grupos: menores a la izquierda y mayores a la derecha.",
+                steps: ["Elige un Pivote (rosa).", "Mueve menores detrás del Muro (azul).", "Coloca el Pivote en medio."]
+            }
+        };
+
+        function selectAlgo(algo) {
+            selectedAlgo = algo;
+            document.querySelectorAll('.algo-btn').forEach(b => {
+                b.classList.remove('border-blue-500', 'bg-slate-700', 'scale-105');
+                b.classList.add('border-slate-700', 'bg-slate-800');
+            });
+            document.getElementById(`btn-algo-${algo}`).classList.add('border-blue-500', 'bg-slate-700', 'scale-105');
+            
+            const g = guides[algo];
+            document.getElementById('guide-title').innerText = g.title;
+            document.getElementById('guide-icon').innerText = g.icon;
+            document.getElementById('guide-text').innerText = g.text;
+
+            const list = document.getElementById('steps-list');
+            list.innerHTML = '';
+            g.steps.forEach(s => {
+                const li = document.createElement('li');
+                li.innerText = s;
+                list.appendChild(li);
+            });
+            document.getElementById('algo-steps-box').classList.remove('hidden');
+        }
+
+        function setDifficulty(n) {
+            arraySize = n;
+            document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('border-blue-500', 'bg-blue-600', 'font-bold'));
+            document.getElementById(`diff-${n}`).classList.add('border-blue-500', 'bg-blue-600', 'font-bold');
+        }
+
+        function startGame() {
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            document.getElementById('algo-name-display').innerHTML = `${guides[selectedAlgo].icon} ${guides[selectedAlgo].title}`;
+            
+            moves = 0; errors = 0; i = 0; j = 0;
+            generateArray();
+            initAlgoState();
+            renderArray();
+            updateUI();
+            gameActive = true;
+        }
+
+        function resetToSetup() {
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('victory-screen').classList.add('hidden');
+            document.getElementById('setup-screen').classList.remove('hidden');
+            gameActive = false;
+        }
+
+        function generateArray() {
+            array = [];
+            while(array.length < arraySize) {
+                let r = Math.floor(Math.random() * 45) + 5;
+                if(!array.includes(r)) array.push(r);
+            }
+        }
+
+        function initAlgoState() {
+            if(selectedAlgo === 'bubble') { i = 0; j = 0; }
+            if(selectedAlgo === 'selection') { i = 0; j = 1; minIndex = 0; }
+            if(selectedAlgo === 'insertion') { i = 1; j = 1; }
+            if(selectedAlgo === 'quick') { i = 0; j = 0; pivotIndex = arraySize - 1; }
+            updateControls();
+            updateInstruction();
+        }
+
+        function renderArray() {
+            const container = document.getElementById('array-container');
+            container.innerHTML = '';
+            
+            array.forEach((val, idx) => {
+                const div = document.createElement('div');
+                div.className = `array-item relative flex items-center justify-center bg-slate-700 border-2 border-slate-500 rounded-xl w-10 md:w-16 text-white font-bold`;
+                div.style.height = `${val * 4 + 50}px`;
+                div.id = `item-${idx}`;
+                div.innerHTML = `<span>${val}</span>`;
+                
+                if (selectedAlgo === 'bubble' && idx >= array.length - i) div.classList.add('sorted-item');
+                if (selectedAlgo === 'selection') {
+                    if (idx < i) div.classList.add('sorted-item');
+                    if (idx === minIndex) div.classList.add('highlight-min');
+                }
+                if (selectedAlgo === 'insertion' && idx < i) div.classList.add('sorted-item');
+                if (selectedAlgo === 'quick') {
+                    if (idx === pivotIndex) {
+                        div.classList.add('highlight-pivot');
+                        div.innerHTML += `<div class="pointer-label bg-pink-600 text-white animate-bounce-slow">PIVOTE</div>`;
+                    }
+                    if (idx === i) {
+                        div.classList.add('highlight-i');
+                        div.innerHTML += `<div class="pointer-label bg-blue-600 text-white" style="bottom: -70px">MURO I</div>`;
+                    }
+                    if (idx === j && j !== pivotIndex) {
+                        div.classList.add('highlight-pair');
+                        div.innerHTML += `<div class="pointer-label bg-amber-500 text-slate-900" style="bottom: -45px">EXPLORADOR</div>`;
+                    }
+                    if (idx < i) div.classList.add('smaller-group');
+                }
+                container.appendChild(div);
+            });
+
+            if (selectedAlgo !== 'quick') {
+                if (selectedAlgo === 'bubble' && j < array.length - 1 - i) {
+                    document.getElementById(`item-${j}`).classList.add('highlight-pair');
+                    document.getElementById(`item-${j+1}`).classList.add('highlight-pair');
+                }
+                if (selectedAlgo === 'selection' && j < arraySize) {
+                    document.getElementById(`item-${j}`).classList.add('highlight-pair');
+                }
+                if (selectedAlgo === 'insertion' && j > 0) {
+                    document.getElementById(`item-${j}`).classList.add('highlight-pair');
+                    document.getElementById(`item-${j-1}`).classList.add('highlight-pair');
+                }
+            }
+        }
+
+        function updateInstruction() {
+            const text = document.getElementById('instruction-text');
+            if (selectedAlgo === 'bubble') {
+                text.innerHTML = `Analizando vecinos: ¿Es <span class="text-amber-400 font-bold">${array[j]}</span> mayor que <span class="text-amber-400 font-bold">${array[j+1]}</span>?`;
+            } else if (selectedAlgo === 'selection') {
+                text.innerHTML = `Buscando el mínimo: ¿Es <span class="text-amber-400 font-bold">${array[j]}</span> menor que el mínimo guardado (<span class="text-emerald-400 font-bold">${array[minIndex]}</span>)?`;
+            } else if (selectedAlgo === 'insertion') {
+                text.innerHTML = `Ordenando: ¿El elemento <span class="text-amber-400 font-bold">${array[j]}</span> debería ir antes que el <span class="text-amber-400 font-bold">${array[j-1]}</span>?`;
+            } else if (selectedAlgo === 'quick') {
+                text.innerHTML = `Partición: ¿Es el Explorador (<span class="text-amber-400 font-bold">${array[j]}</span>) menor o igual al Pivote (<span class="text-pink-400 font-bold">${array[pivotIndex]}</span>)?`;
+            }
+        }
+
+        function updateControls() {
+            const btns = document.getElementById('game-buttons');
+            btns.innerHTML = '';
+            
+            const createBtn = (label, color, onClick) => {
+                const b = document.createElement('button');
+                b.className = `${color} text-white font-bold py-4 px-10 rounded-2xl transition-all active:scale-95 shadow-lg border-b-4 border-black/20`;
+                b.innerText = label;
+                b.onclick = onClick;
+                btns.appendChild(b);
+            };
+
+            if (selectedAlgo === 'bubble' || selectedAlgo === 'insertion') {
+                createBtn('SÍ, INTERCAMBIAR', 'bg-amber-500 hover:bg-amber-400', () => handleDecision(true));
+                createBtn('NO, MANTENER', 'bg-slate-600 hover:bg-slate-500', () => handleDecision(false));
+            } else if (selectedAlgo === 'selection') {
+                createBtn('SÍ, NUEVO MÍNIMO', 'bg-emerald-500 hover:bg-emerald-400', () => handleDecision(true));
+                createBtn('NO, SEGUIR', 'bg-slate-600 hover:bg-slate-500', () => handleDecision(false));
+            } else if (selectedAlgo === 'quick') {
+                createBtn('SÍ, MOVER A MENORES', 'bg-blue-600 hover:bg-blue-500', () => handleDecision(true));
+                createBtn('NO, QUEDA EN MAYORES', 'bg-slate-600 hover:bg-slate-500', () => handleDecision(false));
+            }
+        }
+
+        function handleDecision(userAction) {
+            let correct = false;
+            
+            if (selectedAlgo === 'bubble') {
+                correct = (array[j] > array[j+1]) === userAction;
+                if (correct) {
+                    if (userAction) [array[j], array[j+1]] = [array[j+1], array[j]];
+                    j++;
+                    if (j >= array.length - 1 - i) { j = 0; i++; }
+                    if (i >= array.length - 1) return endGame();
+                }
+            } 
+            else if (selectedAlgo === 'selection') {
+                correct = (array[j] < array[minIndex]) === userAction;
+                if (correct) {
+                    if (userAction) minIndex = j;
+                    j++;
+                    if (j >= arraySize) {
+                        [array[i], array[minIndex]] = [array[minIndex], array[i]];
+                        i++; minIndex = i; j = i + 1;
+                    }
+                    if (i >= arraySize - 1) return endGame();
+                }
+            } 
+            else if (selectedAlgo === 'insertion') {
+                correct = (array[j] < array[j-1]) === userAction;
+                if (correct) {
+                    if (userAction) {
+                        [array[j], array[j-1]] = [array[j-1], array[j]];
+                        j--;
+                        if (j === 0) { i++; j = i; }
+                    } else {
+                        i++; j = i;
+                    }
+                    if (i >= arraySize) return endGame();
+                }
+            }
+            else if (selectedAlgo === 'quick') {
+                correct = (array[j] <= array[pivotIndex]) === userAction;
+                if (correct) {
+                    if (userAction) {
+                        [array[j], array[i]] = [array[i], array[j]];
+                        i++;
+                    }
+                    j++;
+                    if (j === pivotIndex) {
+                        [array[i], array[pivotIndex]] = [array[pivotIndex], array[i]];
+                        return endGame(); 
+                    }
+                }
+            }
+
+            if (!correct) {
+                errors++;
+                const inst = document.getElementById('instruction-text');
+                inst.classList.add('text-rose-400');
+                setTimeout(() => inst.classList.remove('text-rose-400'), 600);
+            } else {
+                moves++;
+                renderArray();
+                updateUI();
+                updateInstruction();
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('move-counter').innerText = `Aciertos: ${moves}`;
+            document.getElementById('error-counter').innerText = `Errores: ${errors}`;
+        }
+
+        function endGame() {
+            gameActive = false;
+            renderArray();
+            setTimeout(() => {
+                document.getElementById('game-screen').classList.add('hidden');
+                document.getElementById('victory-screen').classList.remove('hidden');
+                document.getElementById('final-stats').innerText = `Entrenamiento de ${guides[selectedAlgo].title} completado.`;
+            }, 600);
+        }
+
+        selectAlgo('bubble');
+    </script>
+</body>
+</html>
